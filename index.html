@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pentru Vanessa</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#08060d;--fg:#e9e1d3;--btn:#e9e1d3;--btnfg:#08060d;--glow:rgba(150,30,60,.35);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:var(--bg);color:var(--fg);font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;overflow:hidden;position:relative;transition:color 1.5s}
+body.light{--btn:#2b1740;--btnfg:#fff0e2}
+#glow{position:fixed;inset:0;pointer-events:none;background:radial-gradient(60% 50% at 50% 45%,var(--glow),transparent 70%);animation:breathe 6s ease-in-out infinite}
+@keyframes breathe{50%{transform:scale(1.15);opacity:.7}}
+main{position:relative;height:100%;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{width:100%;max-width:440px;text-align:center}
+h1{font-family:'Fraunces',Georgia,serif;font-weight:400;font-size:clamp(28px,7.5vw,40px);line-height:1.2;margin:0 0 18px;min-height:2.4em}
+h1 em{font-style:italic}
+p{font-size:18px;line-height:1.5;margin:0 0 22px}
+.step{display:none}.step.on{display:block}
+.fade{opacity:0;transition:opacity 1s}.fade.in{opacity:1}
+button{font:inherit;font-weight:500;font-size:18px;border:0;border-radius:6px;padding:14px 26px;margin:6px;cursor:pointer;color:var(--btnfg);background:var(--btn);transition:background 1.5s,color 1.5s,transform .2s}
+button:disabled{opacity:.4;cursor:default}
+button:focus-visible{outline:2px solid currentColor;outline-offset:3px}
+.reply{min-height:60px;font-family:'Fraunces',Georgia,serif;font-style:italic;font-size:20px;margin-top:14px}
+.bar{height:6px;background:rgba(127,127,127,.3);border-radius:9px;overflow:hidden;margin:22px 0}
+.bar i{display:block;height:100%;width:0;background:currentColor;transition:width .4s}
+#no{position:fixed;z-index:5;transition:left .25s,top .25s,opacity .4s;background:transparent;color:var(--fg);border:1px solid currentColor}
+#yes{transition:transform .25s,background 1.5s,color 1.5s}
+.note{margin-top:26px;padding-top:18px;border-top:1px solid rgba(127,127,127,.4);font-size:16px;line-height:1.5}
+#dt{font-size:clamp(24px,6.4vw,33px);min-height:7em}
+.glowtxt{animation:tg 4s ease-in-out infinite}
+@keyframes tg{50%{text-shadow:0 0 26px rgba(214,51,108,.5)}}
+canvas{position:fixed;inset:0;pointer-events:none;z-index:9}
+@media (prefers-reduced-motion:reduce){#glow{animation:none}}
+</style>
+</head>
+<body>
+<div id="glow"></div>
+<main><div class="card">
+
+<section class="step on" id="s0">
+<h1 id="t0"></h1>
+<p class="fade" id="p0">Linkul acesta nu a ajuns la tine întâmplător. Înainte de o întrebare, am nevoie să te cunosc puțin.</p>
+<button class="fade" id="b0">Continuă</button>
+</section>
+
+<section class="step" id="q">
+<h1 id="qt"></h1>
+<div id="qa" class="fade"></div>
+<div class="reply" id="qr"></div>
+</section>
+
+<section class="step" id="calc">
+<h1 id="ct">Se analizează răspunsurile Vanessei</h1>
+<div class="bar"><i id="fill"></i></div>
+<p id="calcTxt">Se citesc răspunsurile</p>
+</section>
+
+<section class="step" id="done">
+<h1 id="dt"></h1>
+<p class="fade" id="dp">Testul s-a terminat. Rezultatul: o persoană rară.</p>
+<div class="note fade" id="dn">Testul a fost făcut individual pentru tine. Conceptul site-ului l-a făcut Claude, un AI, și trebuie să recunosc că e un concept bun.</div>
+</section>
+
+</div></main>
+<canvas id="cv"></canvas>
+
+<script>
+var STOPS=[[0,[8,6,13]],[.35,[28,16,48]],[.6,[91,42,98]],[.8,[240,165,160]],[1,[255,240,226]]];
+var GL=[[150,30,60,.35],[150,30,60,.3],[220,90,120,.35],[255,190,170,.6],[255,255,255,.6]];
+var curT=0;
+function mixc(a,b,k){return a.map(function(v,i){return Math.round(v+(b[i]-v)*k)})}
+function setT(t){
+  curT=Math.max(0,Math.min(1,t));
+  var i=0;while(i<STOPS.length-2&&curT>STOPS[i+1][0])i++;
+  var a=STOPS[i],b=STOPS[i+1],k=(curT-a[0])/(b[0]-a[0]);
+  var c=mixc(a[1],b[1],k);
+  var root=document.documentElement.style;
+  root.setProperty('--bg','rgb('+c.join(',')+')');
+  var g=GL[i],h=GL[i+1];
+  root.setProperty('--glow','rgba('+mixc(g.slice(0,3),h.slice(0,3),k).join(',')+','+(g[3]+(h[3]-g[3])*k).toFixed(2)+')');
+  var light=curT>=.7;
+  document.body.classList.toggle('light',light);
+  root.setProperty('--fg',light?'#2b1740':'#e9e1d3');
+}
+document.body.style.transition='background-color 1.6s';
+document.documentElement.style.transition='';
+(function(){var s=document.createElement('style');s.textContent='body{background:var(--bg);transition:background 1.6s,color 1.5s}';document.head.appendChild(s)})();
+
+function type(el,txt,cb,speed){
+  el.textContent='';var i=0;speed=speed||55;
+  (function n(){ if(i<=txt.length){el.textContent=txt.slice(0,i++);setTimeout(n,txt[i-2]==='.'||txt[i-2]===','?speed*5:speed)} else if(cb)cb(); })();
+}
+function show(id){
+  document.querySelectorAll('.step').forEach(function(s){s.classList.remove('on')});
+  document.getElementById(id).classList.add('on');
+}
+
+/* intro */
+type(document.getElementById('t0'),"Vanessa.",function(){
+  setTimeout(function(){document.getElementById('p0').classList.add('in');
+  setTimeout(function(){document.getElementById('b0').classList.add('in')},1400)},900);
+},160);
+document.getElementById('b0').onclick=function(){show('q');setT(.04);showQ()};
+
+var QS=[
+ {t:"Ce oră ți se pare mai frumoasă: trei dimineața sau apusul?",a:["Trei dimineața","Apusul"],r:["Știam. Vezi lucruri pe care alții le ratează.","Lumina bună. Alegere sigură."]},
+ {t:"Auzi pași pe hol, noaptea. Ce faci?",a:["Merg să văd cine e","Mă ascund sub pătură"],r:["Curajoasă. Notat.","Cea mai rațională decizie din lume."]},
+ {t:"Cât de des râzi la glumele mele proaste?",a:["Mereu","Din politețe"],r:["Minciună frumoasă, dar o accept.","Ai fost prinsă. Dar te iert."]},
+ {t:"Ți-aș fura ultima felie de pizza. Ce faci?",a:["Te iert","Război"],r:["Prea frumos ca să fie adevărat.","Corect. Retrag cererea."]},
+ {t:"Dimineața, înainte de orice conversație: cafea sau ceai?",a:["Cafea","Ceai","Nimic, lasă-mă"],r:["Cafea. Deci pot conta pe tine la ora opt.","Ceai. Calm și rafinat.","Respect. Tăcerea de dimineață e sfântă."]},
+ {t:"Cum arată o seară perfectă pentru tine?",a:["Plimbare fără destinație","Film și pături","Mâncare bună și povești"],r:["Perfect. Cele mai bune discuții apar mergând.","Aprobat. Eu aduc popcornul.","Mă simt deja invitat."]},
+ {t:"Ultima întrebare de test: cât de sinceră poți fi acum?",a:["Total","Puțin","Depinde de întrebare"],r:["Atunci ascultă mai departe.","Puțin e suficient. Se mai descoperă.","Foarte corect. Rezultatul e aproape."]}
+];
+var qi=0;
+function showQ(){
+  var q=QS[qi],box=document.getElementById('qa');
+  box.classList.remove('in');box.innerHTML='';
+  document.getElementById('qr').textContent='';
+  type(document.getElementById('qt'),q.t,function(){
+    q.a.forEach(function(txt,i){
+      var b=document.createElement('button');b.textContent=txt;
+      b.onclick=function(){
+        box.querySelectorAll('button').forEach(function(x){x.disabled=true});
+        type(document.getElementById('qr'),q.r[i],null,35);
+        qi++;setT(.04+qi/QS.length*.72);
+        setTimeout(function(){ if(qi<QS.length)showQ(); else startCalc(); },2400);
+      };
+      box.appendChild(b);
+    });
+    box.classList.add('in');
+  },qi<2?70:38);
+}
+
+function startCalc(){
+  show('calc');
+  var f=document.getElementById('fill'),t=document.getElementById('calcTxt');
+  var msgs=["Se citesc răspunsurile","Se compară cu alte persoane: nimeni nu se apropie","Rezultat: compatibilitate peste scală","Scala a cedat. Continuăm fără ea"];
+  var p=0,m=0;
+  var iv=setInterval(function(){
+    p+=Math.random()*12+5;if(p>100)p=100;
+    f.style.width=p+'%';setT(.76+p/100*.24);
+    t.textContent=msgs[Math.min(m,3)];
+    if(p>=100){clearInterval(iv);setTimeout(startFinal,1500)}else if(p>(m+1)*26)m++;
+  },700);
+}
+
+var cv=document.getElementById('cv'),cx=cv.getContext('2d'),P=[],run=false,ambient=false;
+var COLS=['#d6336c','#f2b36b','#ffffff','#7a3b69','#ff9aa8'];
+var calm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+function size(){cv.width=innerWidth;cv.height=innerHeight}size();addEventListener('resize',size);
+function burst(x,y,n){
+  for(var i=0;i<n;i++)P.push({x:innerWidth*x,y:innerHeight*y,vx:(Math.random()-.5)*15,vy:Math.random()*-14-2,s:Math.random()*4+3,c:COLS[i%5],t:0,r:Math.random()*6});
+  if(!run){run=true;loop()}
+}
+function loop(){
+  cx.clearRect(0,0,cv.width,cv.height);
+  if(ambient&&!calm&&Math.random()<.22)P.push({x:Math.random()*innerWidth,y:-12,vx:0,vy:Math.random()*1.1+.6,s:Math.random()*3+3,c:COLS[Math.floor(Math.random()*5)],t:1,r:Math.random()*6});
+  P.forEach(function(p){
+    if(p.t){p.r+=.03;p.x+=Math.sin(p.r)*.9;p.y+=p.vy;cx.globalAlpha=.8;cx.beginPath();cx.fillStyle=p.c;cx.ellipse(p.x,p.y,p.s,p.s*1.7,p.r,0,7);cx.fill()}
+    else{p.x+=p.vx;p.y+=p.vy;p.vy+=.28;p.vx*=.99;p.r+=.2;cx.globalAlpha=1;cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.fillStyle=p.c;cx.fillRect(-p.s,-p.s/2,p.s*2,p.s);cx.restore()}
+  });
+  P=P.filter(function(p){return p.y<cv.height+30});
+  requestAnimationFrame(loop);
+}
+function startFinal(){
+  show('done');setT(1);
+  var t=document.getElementById('dt');
+  setTimeout(function(){
+    type(t,"Ochii tăi îmi par cei mai frumoși și plini de bunătate. Aș vrea în fiecare zi să mă trezesc cu ei în fața mea.",function(){
+      t.classList.add('glowtxt');
+      burst(.5,.4,150);ambient=true;
+      setTimeout(function(){burst(.12,.65,90);burst(.88,.65,90)},700);
+      setTimeout(function(){burst(.5,.3,120)},1600);
+      document.getElementById('dp').classList.add('in');
+      setTimeout(function(){document.getElementById('dn').classList.add('in')},1800);
+    },65);
+  },900);
+}
+</script>
+</body>
+</html>
